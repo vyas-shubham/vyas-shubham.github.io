@@ -146,9 +146,9 @@ giscus:
   lang: en
 
 # Disqus comments (DEPRECATED)
-disqus_shortname: al-folio # put your disqus shortname
+disqus_shortname: shubham # put your disqus shortname
 # Comments
-disqus_shortname:  # put your disqus shortname
+# disqus_shortname:  shubham # put your disqus shortname
 # https://help.disqus.com/en/articles/1717111-what-s-a-shortname
 
 # External sources.
@@ -273,7 +273,7 @@ scholar:
   locale: en
 
   source: /_bibliography
-  bibliography: "**/*.bib"
+  bibliography: papers.bib
   bibliography_template: bib
   # Note: if you have latex math in your bibtex, the latex filter
   # preprocessing may conflict with MathJAX if the latter is enabled.
