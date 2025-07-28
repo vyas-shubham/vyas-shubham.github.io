@@ -18,34 +18,153 @@ nav_order: 1
   font-weight: bold;
   border-bottom: 2px solid var(--global-divider-color, #eee);
 }
+
+.chart-container {
+  width: 70%;
+  margin: 0 auto 60px auto; /* Increased bottom margin from 40px to 60px */
+  height: 350px; /* Slightly taller for better visibility */
+  text-align: center;
+}
+
+.publications-content {
+  width: 100%; /* Full width for publications */
+}
+
+.publications-content h2:first-child {
+  margin-top: 20px; /* Add additional top margin to the first heading */
+}
+
+canvas {
+  aspect-ratio: 16/9;
+  width: 100%;
+  max-height: 100%;
+}
 </style>
 
----
+<!-- Automatically find all publication years -->
+{% assign all_years = "" | split: "" %}
+{% assign journal_years = "" | split: "" %}
+{% assign conf_years = "" | split: "" %}
 
-## Journal Articles
+{% for year in (2010..2030) %}
+  {% capture article_count %}{% bibliography_count -q @article[year={{year}}]* %}{% endcapture %}
+  {% capture conf_count %}{% bibliography_count -q @inproceedings[year={{year}}]* %}{% endcapture %}
 
-<div class="publications">
-  {% assign years = "2024,2023,2022" | split: "," %}
-  {% for y in years %}
-    {% capture articles %}{% bibliography -q @article[year={{y}}]* --sort-by year --order descending %}{% endcapture %}
-    {% unless articles contains 'No entries found' or articles == blank %}
+  {% assign article_count = article_count | strip %}
+  {% assign conf_count = conf_count | strip %}
+
+  {% if article_count != "0" and article_count != "" %}
+    {% assign all_years = all_years | push: year | uniq %}
+    {% assign journal_years = journal_years | push: year | uniq %}
+  {% endif %}
+
+  {% if conf_count != "0" and conf_count != "" %}
+    {% assign all_years = all_years | push: year | uniq %}
+    {% assign conf_years = conf_years | push: year | uniq %}
+  {% endif %}
+{% endfor %}
+
+{% assign all_years_sorted = all_years | sort %}
+{% assign year_counts = "" | split: "" %}
+{% assign cumulative_count = 0 %}
+
+{% for year in all_years_sorted %}
+  {% capture article_count %}
+    {% bibliography_count -q @article[year={{year}}]* %}
+  {% endcapture %}
+
+  {% capture conf_count %}
+    {% bibliography_count -q @inproceedings[year={{year}}]* %}
+  {% endcapture %}
+
+  {% assign article_count = article_count | strip %}
+  {% assign conf_count = conf_count | strip %}
+
+  {% if article_count == "" %}{% assign article_count = 0 %}{% endif %}
+  {% if conf_count == "" %}{% assign conf_count = 0 %}{% endif %}
+
+  {% assign total_count = article_count | plus: conf_count %}
+  {% assign cumulative_count = cumulative_count | plus: total_count %}
+
+  {% assign year_data = year | append: ":" | append: cumulative_count %}
+  {% assign year_counts = year_counts | push: year_data %}
+{% endfor %}
+
+<!-- Chart centered at the top -->
+<div class="chart-container">
+  <h3>Cumulative Publications</h3>
+  <canvas id="publicationsChart"></canvas>
+</div>
+
+<!-- Publications content with full width -->
+<div class="publications-content">
+  <h2>Journal Articles</h2>
+
+  <div class="publications">
+    {% assign journal_years_sorted = journal_years | sort | reverse %}
+    {% for y in journal_years_sorted %}
+      {% capture articles %}{% bibliography -q @article[year={{y}}]* --sort-by year --order descending %}{% endcapture %}
       <div class="sticky-year">{{ y }}</div>
       {{ articles }}
-    {% endunless %}
-  {% endfor %}
-</div>
+    {% endfor %}
+  </div>
 
----
+  <h2>Conference Papers</h2>
 
-## Conference Papers
-
-<div class="publications">
-  {% assign years = "2025,2024,2023,2022,2021,2020,2018,2017,2015" | split: "," %}
-  {% for y in years %}
-    {% capture confs %}{% bibliography -q @inproceedings[year={{y}}]* --sort-by year --order descending %}{% endcapture %}
-    {% unless confs contains 'No entries found' or confs == blank %}
+  <div class="publications">
+    {% assign conf_years_sorted = conf_years | sort | reverse %}
+    {% for y in conf_years_sorted %}
+      {% capture confs %}{% bibliography -q @inproceedings[year={{y}}]* --sort-by year --order descending %}{% endcapture %}
       <div class="sticky-year">{{ y }}</div>
       {{ confs }}
-    {% endunless %}
-  {% endfor %}
+    {% endfor %}
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Data from Jekyll
+  const yearData = [
+    {% for year_count in year_counts %}
+      {% assign year_info = year_count | split: ":" %}
+      { year: "{{ year_info[0] }}", count: {{ year_info[1] }} }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+
+  // Sort data by year
+  yearData.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+
+  // Prepare chart data
+  const labels = yearData.map(item => item.year);
+  const counts = yearData.map(item => item.count);
+
+  // Create chart
+  const ctx = document.getElementById('publicationsChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Cumulative Publications',
+        data: counts,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+</script>
