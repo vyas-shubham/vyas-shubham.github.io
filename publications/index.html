@@ -164,17 +164,45 @@
   font-weight: bold;
   border-bottom: 2px solid var(--global-divider-color, #eee);
 }
+
+.chart-container {
+  width: 70%;
+  margin: 0 auto 60px auto; /* Increased bottom margin from 40px to 60px */
+  height: 350px; /* Slightly taller for better visibility */
+  text-align: center;
+}
+
+.publications-content {
+  width: 100%; /* Full width for publications */
+}
+
+.publications-content h2:first-child {
+  margin-top: 20px; /* Add additional top margin to the first heading */
+}
+
+canvas {
+  aspect-ratio: 16/9;
+  width: 100%;
+  max-height: 100%;
+}
 </style>
 
-<hr>
+<!-- Automatically find all publication years -->
 
-<h2 id="journal-articles">Journal Articles</h2>
+<!-- Chart centered at the top -->
+<div class="chart-container">
+  <h3>Cumulative Publications</h3>
+  <canvas id="publicationsChart"></canvas>
+</div>
 
-<div class="publications">
-  
-  
+<!-- Publications content with full width -->
+<div class="publications-content">
+  <h2>Journal Articles</h2>
+
+  <div class="publications">
     
     
+      
       <div class="sticky-year">2024</div>
       <ol class="bibliography">
 <li>
@@ -249,9 +277,7 @@
 </li>
 </ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2023</div>
       <ol class="bibliography">
 <li>
@@ -326,9 +352,7 @@
 </li>
 </ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2022</div>
       <ol class="bibliography">
 <li>
@@ -403,18 +427,14 @@
 </li>
 </ol>
     
-  
-</div>
+  </div>
 
-<hr>
+  <h2>Conference Papers</h2>
 
-<h2 id="conference-papers">Conference Papers</h2>
-
-<div class="publications">
-  
-  
+  <div class="publications">
     
     
+      
       <div class="sticky-year">2025</div>
       <ol class="bibliography"><li>
 <!-- _layouts/bib.html -->
@@ -453,9 +473,7 @@
       </div>
 </li></ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2024</div>
       <ol class="bibliography">
 <li>
@@ -683,9 +701,7 @@
 </li>
 </ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2023</div>
       <ol class="bibliography">
 <li>
@@ -843,9 +859,7 @@
 </li>
 </ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2022</div>
       <ol class="bibliography">
 <li>
@@ -1097,9 +1111,7 @@
 </li>
 </ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2021</div>
       <ol class="bibliography">
 <li>
@@ -1174,9 +1186,7 @@
 </li>
 </ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2020</div>
       <ol class="bibliography">
 <li>
@@ -1286,9 +1296,7 @@
 </li>
 </ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2018</div>
       <ol class="bibliography"><li>
 <!-- _layouts/bib.html -->
@@ -1327,9 +1335,7 @@
       </div>
 </li></ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2017</div>
       <ol class="bibliography"><li>
 <!-- _layouts/bib.html -->
@@ -1368,9 +1374,7 @@
       </div>
 </li></ol>
     
-  
-    
-    
+      
       <div class="sticky-year">2015</div>
       <ol class="bibliography"><li>
 <!-- _layouts/bib.html -->
@@ -1408,8 +1412,82 @@
       </div>
 </li></ol>
     
-  
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Data from Jekyll
+  const yearData = [
+    
+      
+      { year: "2015", count: 1 },
+    
+      
+      { year: "2017", count: 2 },
+    
+      
+      { year: "2018", count: 3 },
+    
+      
+      { year: "2020", count: 6 },
+    
+      
+      { year: "2021", count: 8 },
+    
+      
+      { year: "2022", count: 17 },
+    
+      
+      { year: "2023", count: 23 },
+    
+      
+      { year: "2024", count: 31 },
+    
+      
+      { year: "2025", count: 32 }
+    
+  ];
+
+  // Sort data by year
+  yearData.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+
+  // Prepare chart data
+  const labels = yearData.map(item => item.year);
+  const counts = yearData.map(item => item.count);
+
+  // Create chart
+  const ctx = document.getElementById('publicationsChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Cumulative Publications',
+        data: counts,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+</script>
+
 
           </article>
 
@@ -1422,7 +1500,7 @@
     <footer class="fixed-bottom">
       <div class="container mt-0">
         © Copyright 2025 Shubham  Vyas. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>.
-Last updated: July 27, 2025.
+Last updated: July 28, 2025.
       </div>
     </footer>
 
