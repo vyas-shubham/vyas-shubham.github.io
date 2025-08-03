@@ -19,19 +19,47 @@ nav_order: 1
   border-bottom: 2px solid var(--global-divider-color, #eee);
 }
 
+.scholar-metrics {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin: 30px 0 40px 0;
+  padding: 20px;
+  background: var(--global-bg-color, #f8f9fa);
+  border-radius: 10px;
+  border: 1px solid var(--global-divider-color, #dee2e6);
+}
+
+.metric-item {
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 2em;
+  font-weight: bold;
+  color: var(--global-theme-color, #007bff);
+  display: block;
+}
+
+.metric-label {
+  font-size: 0.9em;
+  color: var(--global-text-color-light, #6c757d);
+  margin-top: 5px;
+}
+
 .chart-container {
   width: 70%;
-  margin: 0 auto 60px auto; /* Increased bottom margin from 40px to 60px */
-  height: 350px; /* Slightly taller for better visibility */
+  margin: 0 auto 60px auto;
+  height: 350px;
   text-align: center;
 }
 
 .publications-content {
-  width: 100%; /* Full width for publications */
+  width: 100%;
 }
 
 .publications-content h2:first-child {
-  margin-top: 20px; /* Add additional top margin to the first heading */
+  margin-top: 20px;
 }
 
 canvas {
@@ -39,7 +67,28 @@ canvas {
   width: 100%;
   max-height: 100%;
 }
+
+.loading {
+  color: var(--global-text-color-light, #6c757d);
+  font-style: italic;
+}
 </style>
+
+<!-- Google Scholar Metrics Section -->
+<div class="scholar-metrics">
+  <div class="metric-item">
+    <span class="metric-value" id="totalCitations">Loading...</span>
+    <div class="metric-label">Total Citations</div>
+  </div>
+  <div class="metric-item">
+    <span class="metric-value" id="hIndex">Loading...</span>
+    <div class="metric-label">h-index</div>
+  </div>
+  <div class="metric-item">
+    <span class="metric-value" id="i10Index">Loading...</span>
+    <div class="metric-label">i10-index</div>
+  </div>
+</div>
 
 <!-- Automatically find all publication years -->
 {% assign all_years = "" | split: "" %}
@@ -123,7 +172,55 @@ canvas {
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Data from Jekyll
+  // Google Scholar Author ID - Replace with your actual ID
+  const SCHOLAR_ID = '{{site.scholar_userid}}'; // Replace with your actual Google Scholar ID
+
+  // Function to fetch Google Scholar data
+  async function fetchScholarMetrics() {
+    try {
+      // Using a CORS proxy service to fetch Google Scholar data
+      const proxyUrl = 'https://api.allorigins.win/raw?url=';
+      const scholarUrl = `https://scholar.google.com/citations?user=${SCHOLAR_ID}&hl=en`;
+
+      const response = await fetch(proxyUrl + encodeURIComponent(scholarUrl));
+      const html = await response.text();
+
+      // Parse the HTML to extract metrics
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      // Extract citation metrics
+      const citationTable = doc.querySelector('#gsc_rsb_st');
+      if (citationTable) {
+        const rows = citationTable.querySelectorAll('tr');
+
+        // Total citations (first row, second column)
+        const totalCitations = rows[1]?.cells[1]?.textContent || 'N/A';
+        // h-index (second row, second column)
+        const hIndex = rows[2]?.cells[1]?.textContent || 'N/A';
+        // i10-index (third row, second column)
+        const i10Index = rows[3]?.cells[1]?.textContent || 'N/A';
+
+        // Update the DOM
+        document.getElementById('totalCitations').textContent = totalCitations;
+        document.getElementById('hIndex').textContent = hIndex;
+        document.getElementById('i10Index').textContent = i10Index;
+      } else {
+        throw new Error('Could not find citation data');
+      }
+    } catch (error) {
+      console.error('Error fetching Google Scholar data:', error);
+      // Fallback values or manual entry
+      document.getElementById('totalCitations').textContent = 'N/A';
+      document.getElementById('hIndex').textContent = 'N/A';
+      document.getElementById('i10Index').textContent = 'N/A';
+    }
+  }
+
+  // Call the function when the page loads
+  document.addEventListener('DOMContentLoaded', fetchScholarMetrics);
+
+  // Data from Jekyll for publications chart
   const yearData = [
     {% for year_count in year_counts %}
       {% assign year_info = year_count | split: ":" %}
