@@ -217,8 +217,20 @@ canvas {
     }
   }
 
-  // Call the function when the page loads
-  document.addEventListener('DOMContentLoaded', fetchScholarMetrics);
+  // Function to get CSS variable value
+  function getCssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  // Function to get chart colors based on current theme
+  function getChartColors() {
+    return {
+      borderColor: getCssVar('--global-theme-color') || '#007bff',
+      backgroundColor: (getCssVar('--global-theme-color') ? getCssVar('--global-theme-color') + '33' : 'rgba(75,192,192,0.2)'),
+      gridColor: getCssVar('--global-divider-color') || '#eee',
+      fontColor: getCssVar('--global-text-color') || '#222'
+    };
+  }
 
   // Data from Jekyll for publications chart
   const yearData = [
@@ -228,40 +240,77 @@ canvas {
     {% endfor %}
   ];
 
-  // Sort data by year
   yearData.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-
-  // Prepare chart data
   const labels = yearData.map(item => item.year);
   const counts = yearData.map(item => item.count);
 
-  // Create chart
-  const ctx = document.getElementById('publicationsChart').getContext('2d');
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Cumulative Publications',
-        data: counts,
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 2,
-        tension: 0.3,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            precision: 0
+  // Chart instance variable
+  let chart;
+
+  // Function to create or update the chart with current theme colors
+  function renderChart() {
+    const colors = getChartColors();
+    const ctx = document.getElementById('publicationsChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Cumulative Publications',
+          data: counts,
+          backgroundColor: colors.backgroundColor,
+          borderColor: colors.borderColor,
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: colors.fontColor
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: colors.fontColor },
+            grid: { color: colors.gridColor }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: colors.fontColor, precision: 0 },
+            grid: { color: colors.gridColor }
           }
         }
       }
-    }
+    });
+  }
+
+  // Initial render
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchScholarMetrics();
+    renderChart();
+
+    // MutationObserver to detect theme changes
+    const target = document.body; // or document.documentElement if your theme toggles on <html>
+    const observer = new MutationObserver(() => {
+      renderChart();
+    });
+
+    observer.observe(target, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
   });
+
+  // Listen for theme changes (if your theme toggles a class or attribute, update this accordingly)
+  // Example: listen for a custom event 'themechange'
+  window.addEventListener('themechange', renderChart);
+
+  // If your theme uses a class on <body> or <html>, you can use a MutationObserver to detect changes and call renderChart()
 </script>
