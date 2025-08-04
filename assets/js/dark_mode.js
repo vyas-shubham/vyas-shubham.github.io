@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     mode_toggle.addEventListener("click", function() {
         toggleTheme(localStorage.getItem("theme"));
+        if (typeof window.renderChart === "function") window.renderChart();
     });
 });
 
