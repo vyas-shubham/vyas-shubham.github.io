@@ -11,12 +11,16 @@ nav_order: 1
 .sticky-year {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 2; /* Increased from 10 to 2 to ensure progress bar is above */
   background: var(--global-bg-color, #fff);
   padding: 0.5em 0;
   font-size: 1.5em;
   font-weight: bold;
   border-bottom: 2px solid var(--global-divider-color, #eee);
+}
+
+progress#progress {
+  z-index: 3; /* Ensure progress bar is above sticky-year */
 }
 
 .scholar-metrics {
